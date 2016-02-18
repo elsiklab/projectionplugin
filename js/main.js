@@ -21,7 +21,7 @@ return declare( JBrowsePlugin,
                 label: 'Reverse complement view',
                 id: 'menubar_revcomp',
                 title: 'Reverse complement view',
-                checked: browser.config.reverseComplement,
+                checked: !!browser.config.reverseComplement,
                 onClick: function() {
                     var ret = browser.view.visibleRegion();
                     browser.config.reverseComplement = this.get("checked");
