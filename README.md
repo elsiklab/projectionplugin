@@ -39,3 +39,9 @@ Currently performs a reverse complement projection
 
 ![](img/forward.png)
 ![](img/reverse.png)
+
+
+## Known bugs
+
+
+Smaller scaffolds (e.g. Group1.1) don't seem to trigger the reverse yet, but longer scaffolds (e.g. Group11.18) can trigger it
