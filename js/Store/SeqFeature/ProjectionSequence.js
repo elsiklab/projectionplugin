@@ -17,6 +17,7 @@ return declare( Sequence,
         // pad with spaces at the beginning of the string if necessary
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var origstart = query.start;
+        console.log('before',query)
         if(rev) {
             var start = Math.max(this.refSeq.length - query.end,0);
             var end = Math.min(this.refSeq.length - query.start,this.refSeq.length);
@@ -24,16 +25,18 @@ return declare( Sequence,
             query.end = end;
         }
         var newSeqCallback = function( sequence ) {
-              var ret = rev ? Util.revcom( sequence ) : sequence
-              var len = ret.length - ret.trim().length;
-              // handle corner cases with padding the ref seqs with spaces at ends of chromosomes
-              // not fully passing tests yet
-              if(len && origstart>1) {
-                  ret = ret.trim() + new Array(len).join(" ");
-              }
+            console.log('sequence',sequence,rev);
+            var ret = rev ? Util.revcom( sequence ) : sequence
+            var len = ret.length - ret.trim().length;
+            // handle corner cases with padding the ref seqs with spaces at ends of chromosomes
+            // not fully passing tests yet
+            if(len && origstart>1) {
+                ret = ret.trim() + new Array(len).join(" ");
+            }
 
-              seqCallback( ret )
+            seqCallback(ret);
         }
+        console.log('after',query)
 
 
         this.inherited( arguments, [query, newSeqCallback, errorCallback] );
