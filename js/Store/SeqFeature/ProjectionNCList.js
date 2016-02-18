@@ -17,36 +17,27 @@ return declare( NCList,
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var startBase  = query.start;
         var endBase    = query.end;
+        var len = this.refSeq.length;
+
         if(rev) {
-            query.start = Math.max(this.refSeq.length - endBase, 0);
-            query.end = Math.min(this.refSeq.length - startBase, this.refSeq.length);
+            query.start = Math.max(len - endBase, 0);
+            query.end = Math.min(len - startBase, len);
         }
         
 
         var featCallback = function( feature, path ) {
-            if( rev ) {
-                var s = feature.get('start');
-                var e = feature.get('end');
-                feature.set('end', thisB.refSeq.length - s);
-                feature.set('start', thisB.refSeq.length - e);
-                feature.set('strand', -feature.get('strand'));
-                array.forEach(feature.get('subfeatures'), function(subfeat) {
-                    var ss = subfeat.get('start');
-                    var se = subfeat.get('end');
-                    subfeat.set('end', thisB.refSeq.length-ss);
-                    subfeat.set('start', thisB.refSeq.length-se);
-                    subfeat.set('strand', -subfeat.get('strand'));
-                    array.forEach(subfeat.get('subfeatures'), function(subsubfeat) {
-                        var sss = subsubfeat.get('start');
-                        var sse = subsubfeat.get('end');
-                        subsubfeat.set('end', thisB.refSeq.length-sss);
-                        subsubfeat.set('start', thisB.refSeq.length-sse);
-                        subsubfeat.set('strand', -subsubfeat.get('strand'));
-                    });
-                });
+            var flip = function(f) {
+                var s = f.get('start'), e = f.get('end');
+                f.set('end', len - s);
+                f.set('start', len - e);
+                f.set('strand', -f.get('strand'));
+                if(f.get('subfeatures')) array.forEach(f.get('subfeatures'), flip);
             }
+            if( rev ) flip(feature);
+            
             return origFeatCallback( feature );
         };
+
         this.inherited(arguments, [data, query, featCallback, finishCallback, errorCallback] );
     },
 
