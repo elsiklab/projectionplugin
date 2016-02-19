@@ -29,15 +29,18 @@ return declare( NCList,
         var flip = function(s) {
             return new SimpleFeature({
                 id: s.get('id'),
-                data: {
+                data: lang.mixin(s.data, {
                     start: len-s.get('end'),
+                    name: s.get('name'),
+                    id: s.get('id'),
+                    type: s.get('type'),
+                    description: s.get('description'),
                     end: len-s.get('start'),
                     strand: -s.get('strand'),
-                    type: s.get('type'),
                     subfeatures: array.map(s.get('subfeatures'), function(ss) {
                         return flip(ss)
                     })
-                }
+                })
             });
         }
         var featCallback = function( feature ) {
