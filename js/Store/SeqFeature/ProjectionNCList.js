@@ -2,17 +2,19 @@ define([
            'dojo/_base/declare',
            'dojo/_base/lang',
            'dojo/_base/array',
-           'JBrowse/Store/SeqFeature/NCList'
+           'JBrowse/Store/SeqFeature/NCList',
+           'JBrowse/Model/SimpleFeature'
        ],
        function(
            declare,
            lang,
            array,
-           NCList
+           NCList,
+           SimpleFeature
        ) {
 return declare( NCList,
 {
-    _getFeatures: function( data, query,  origFeatCallback, finishCallback, errorCallback ) {
+    getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var startBase  = query.start;
@@ -20,31 +22,31 @@ return declare( NCList,
         var len = this.refSeq.length;
 
         if(rev) {
-            query.start = Math.max(len - endBase, 0);
-            query.end = Math.min(len - startBase, len);
+            query.start = len - endBase
+            query.end = len - startBase
         }
-        
 
-        var featCallback = function( feature, path ) {
-            var flip = function(f) {
-                var s = f.get('start'), e = f.get('end');
-                f.set('end', len - s);
-                f.set('start', len - e);
-                f.set('strand', -f.get('strand'));
-                if(f.get('subfeatures')) array.forEach(f.get('subfeatures'), flip);
-            }
-            if( rev ) flip(feature);
-            
-            return origFeatCallback( feature );
+        var flip = function(s) {
+            return new SimpleFeature({
+                id: s.get('id'),
+                data: {
+                    start: len-s.get('end'),
+                    end: len-s.get('start'),
+                    strand: -s.get('strand'),
+                    type: s.get('type'),
+                    subfeatures: array.map(s.get('subfeatures'), function(ss) {
+                        return flip(ss)
+                    })
+                }
+            });
+        }
+        var featCallback = function( feature ) {
+            return origFeatCallback(rev ? flip(feature) : feature);
         };
 
-        this.inherited(arguments, [data, query, featCallback, finishCallback, errorCallback] );
-    },
-
-    _decorate_feature: function( accessors, feature, id, parent ) {
-        feature.set = accessors.set;
-        this.inherited(arguments);
+        this.inherited(arguments, [query, featCallback, finishCallback, errorCallback] );
     }
+
 });
 });
 
