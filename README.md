@@ -12,6 +12,7 @@ Currently performs a reverse complement projection
   * ProjectionPlugin/Store/SeqFeature/Sequence
   * ProjectionPlugin/Store/SeqFeature/ProjectionNCList
   * ProjectionPlugin/Store/SeqFeature/ProjectionBigWig
+  * ProjectionPlugin/Store/SeqFeature/ProjectionBAM
 
 
 
@@ -38,9 +39,26 @@ Currently performs a reverse complement projection
          "type" : "FeatureTrack",
          "label" : "Genes"
       }
+      {
+          "storeClass":"ProjectionPlugin/Store/SeqFeature/ProjectionBigWig",
+          "autoscale": "local",
+          "label": "Forager.bw",
+          "type": "JBrowse/View/Track/Wiggle/XYPlot",
+          "urlTemplate": "Forager.bw"
+      },
+      {
+          "storeClass":"ProjectionPlugin/Store/SeqFeature/ProjectionBAM",
+          "label": "Forager.bam",
+          "type": "JBrowse/View/Track/Alignments2",
+          "overridePlugins": true, // WA-specific flag to enable canvasfeatures alignments
+          "urlTemplate": "Forager.bam"
+      }
 
 ## Screenshots
 
 ![](img/forward.png)
 ![](img/reverse.png)
+
+
+
 

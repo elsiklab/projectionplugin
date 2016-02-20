@@ -2,17 +2,17 @@ define([
            'dojo/_base/declare',
            'dojo/_base/lang',
            'dojo/_base/array',
-           'JBrowse/Store/SeqFeature/NCList',
+           'JBrowse/Store/SeqFeature/BAM',
            'JBrowse/Model/SimpleFeature'
        ],
        function(
            declare,
            lang,
            array,
-           NCList,
+           BAM,
            SimpleFeature
        ) {
-return declare( NCList,
+return declare( BAM,
 {
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
@@ -27,21 +27,16 @@ return declare( NCList,
         }
 
         var flip = function(s) {
-            return new SimpleFeature({
+            var ret = new SimpleFeature({
                 id: s.get('id'),
-                data: {
+                data: lang.mixin(lang.clone(s.data), {
                     start: len-s.get('end'),
-                    name: s.get('name'),
-                    id: s.get('id'),
-                    type: s.get('type'),
-                    description: s.get('description'),
                     end: len-s.get('start'),
-                    strand: -s.get('strand'),
-                    subfeatures: array.map(s.get('subfeatures'), function(ss) {
-                        return flip(ss)
-                    })
-                }
+                    strand: -s.get('strand')
+                })
             });
+            return ret;
+            
         }
         var featCallback = function( feature ) {
             return origFeatCallback(rev ? flip(feature) : feature);
