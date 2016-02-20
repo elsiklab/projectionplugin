@@ -27,12 +27,18 @@ return declare( BAM,
         }
 
         var flip = function(s) {
+            var tmp = s.get('cigar').split(/([MIDNSHPX=])/);
+            var cig=[];
+            for(var i=0;i<tmp.length-2;i+=2) {
+                cig.push(tmp[i]+tmp[i+1]);
+            }
             var ret = new SimpleFeature({
                 id: s.get('id'),
                 data: lang.mixin(lang.clone(s.data), {
                     start: len-s.get('end'),
                     end: len-s.get('start'),
-                    strand: -s.get('strand')
+                    strand: s.get('strand'),
+                    cigar: cig.reverse().join('')
                 })
             });
             return ret;
