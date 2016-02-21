@@ -38,7 +38,7 @@ Currently performs a reverse complement projection
          "compress" : 0,
          "type" : "FeatureTrack",
          "label" : "Genes"
-      }
+      },
       {
           "storeClass":"ProjectionPlugin/Store/SeqFeature/ProjectionBigWig",
           "autoscale": "local",
