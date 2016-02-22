@@ -9,7 +9,7 @@ Currently performs a reverse complement projection
 
 * reverseComplement - A boolean to specify reverse complementing. This can also be toggled via a menu option that is added when you load the plugin
 * storeClass - The projections depend on the data types, currently allows
-  * ProjectionPlugin/Store/SeqFeature/Sequence
+  * ProjectionPlugin/Store/SeqFeature/ProjectionSequence
   * ProjectionPlugin/Store/SeqFeature/ProjectionNCList
   * ProjectionPlugin/Store/SeqFeature/ProjectionBigWig
   * ProjectionPlugin/Store/SeqFeature/ProjectionBAM
