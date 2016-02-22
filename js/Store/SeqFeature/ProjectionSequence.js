@@ -13,18 +13,16 @@ define( [
 
 return declare( Sequence,
 {
-    constructor: function() {
-        this.name = 'refseqs';
-    },
     getReferenceSequence: function( query, seqCallback, errorCallback ) {
         // pad with spaces at the beginning of the string if necessary
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var origstart = query.start;
+        var q = dojo.clone(query);
         if(rev) {
             var start = Math.max(this.refSeq.length - query.end,0);
             var end = Math.min(this.refSeq.length - query.start,this.refSeq.length);
-            query.start = start;
-            query.end = end;
+            q.start = start;
+            q.end = end;
         }
         var newSeqCallback = function( sequence ) {
             var ret = rev ? Util.revcom( sequence ) : sequence
@@ -36,7 +34,7 @@ return declare( Sequence,
             }
             seqCallback(ret);
         }
-        this.inherited( arguments, [query, newSeqCallback, errorCallback] );
+        this.inherited( arguments, [q, newSeqCallback, errorCallback] );
     }
 });
 });

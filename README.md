@@ -24,6 +24,7 @@ Currently performs a reverse complement projection
          "chunkSize" : 20000,
          "urlTemplate" : "seq/{refseq_dirpath}/{refseq}-",
          "label" : "DNA",
+         "useAsRefSeqStore": true,
          "type" : "SequenceTrack",
          "category" : "Reference sequence",
          "key" : "Reference sequence"
@@ -60,5 +61,8 @@ Currently performs a reverse complement projection
 ![](img/reverse.png)
 
 
+## Extra notes
 
+- The projection plugin can also be readily combined with SashimiPlot and GCContent plugins
+- The useAsRefSeqStore is used because JBrowse will check if data store is SequenceChunks, but since it is our own ProjectionSequence, we set this manually
 
