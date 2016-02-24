@@ -66,3 +66,18 @@ Currently performs a reverse complement projection
 - The projection plugin can also be readily combined with SashimiPlot and GCContent plugins
 - The useAsRefSeqStore is used because JBrowse will check if data store is SequenceChunks, but since it is our own ProjectionSequence, we set this manually
 
+
+## Example with multi-scaffold projection
+
+    {
+        "projectionStruct":[
+        {
+            "length":1382403,
+            "name": "Group1.1"
+        },
+        {
+            "length":1227296,
+            "name": "Group1.15"
+        }
+        ]
+    }
