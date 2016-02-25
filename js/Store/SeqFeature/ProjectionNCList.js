@@ -2,6 +2,8 @@ define([
            'dojo/_base/declare',
            'dojo/_base/lang',
            'dojo/_base/array',
+           'dojo/promise/all',
+           'dojo/Deferred', 
            'JBrowse/Store/SeqFeature/NCList',
            'JBrowse/Model/SimpleFeature'
        ],
@@ -9,6 +11,8 @@ define([
            declare,
            lang,
            array,
+           all,
+           Deferred,
            NCList,
            SimpleFeature
        ) {
@@ -76,13 +80,11 @@ return declare( NCList,
             this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, featCallback, finishCallback, errorCallback] );
         }
         else if(projection&&query.start<s0.length&&query.end>s0.length) {
-            var k = 0;
-            var f = function() {
-                console.log("here",k);
-               if(++k==2) finishCallback();
-            }
-            this.inherited(arguments, [{ref:s0.name,start:query.start,end:s0.length}, featCallback, f, errorCallback] );
-            this.inherited(arguments, [{ref:s1.name,start:0,end:query.end-s0.length}, featCallback, f, errorCallback] );
+            var def1 = new Deferred();
+            var def2 = new Deferred();
+            this.inherited(arguments, [{ref:s0.name,start:query.start,end:s0.length}, featCallback, function() { def1.resolve(); }, errorCallback] );
+            this.inherited(arguments, [{ref:s1.name,start:0,end:query.end-s0.length}, featCallback, function() { def2.resolve(); }, errorCallback] );
+            all([def1.promise,def2.promise]).then(finishCallback);
         }
     }
 

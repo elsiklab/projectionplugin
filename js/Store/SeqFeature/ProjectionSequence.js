@@ -1,12 +1,16 @@
 define( [
             'dojo/_base/declare',
             'dojo/_base/lang',
+            'dojo/promise/all',
+            'dojo/Deferred',
             'JBrowse/Store/SeqFeature/SequenceChunks',
             'JBrowse/Util'
         ],
         function(
             declare,
             lang,
+            all,
+            Deferred,
             Sequence,
             Util
         ) {
@@ -48,15 +52,40 @@ return declare( Sequence,
             this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, seqCallback, errorCallback] );
         }
         else if(projection&&query.start<s0.length&&query.end>s0.length) {
-            var k = 0;
-            var ret = '';
-            var f = function(sequence) {
-               ret += sequence;
-               if(++k==2) seqCallback(ret);
+            var seq = '';
+            while( seq.length < query.end-query.start )
+                seq += ' ';
+
+            var def1 = new Deferred();
+            var def2= new Deferred();
+            function replaceAt( str, offset, replacement ) {
+                var rOffset = 0;
+                if( offset < 0 ) {
+                    rOffset = -offset;
+                    offset = 0;
+                }
+
+                var length = Math.min( str.length - offset, replacement.length - rOffset );
+
+                return str.substr( 0, offset ) + replacement.substr( rOffset, length ) + str.substr( offset + length );
             }
-            //check order returned
-            this.inherited(arguments, [{ref:s0.name,start:query.start,end:s0.length}, f, errorCallback] );
-            this.inherited(arguments, [{ref:s1.name,start:0,end:query.end-s0.length}, f, errorCallback] );
+            this.inherited(arguments, [{ref:s0.name,start:query.start,end:s0.length},
+                function(seqret) {
+                    seq = replaceAt( seq, 0, seqret );
+                    def1.resolve();
+                },
+                errorCallback
+            ]);
+            this.inherited(arguments, [{ref:s1.name,start:0,end:query.end-s0.length},
+                function(seqret) {
+                    seq = replaceAt( seq, s0.length-query.start, seqret );
+                    def2.resolve();
+                },
+                errorCallback
+            ]);
+            all([def1.promise,def2.promise]).then(function() {
+                seqCallback(seq);
+            });
         }
     }
 });
