@@ -18,75 +18,61 @@ define( [
 return declare( Sequence,
 {
     getReferenceSequence: function( query, seqCallback, errorCallback ) {
-        // pad with spaces at the beginning of the string if necessary
-        var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
+        var thisB = this;
         var origstart = query.start;
         var q = dojo.clone(query);
         var projection = this.browser.config.projectionStruct || [];
-        var s0,s1;
-        if( projection ) {
-            s0 = projection[0];
-            s1 = projection[1];
-        }
-        if(rev) {
-            var start = Math.max(this.refSeq.length - query.end,0);
-            var end = Math.min(this.refSeq.length - query.start,this.refSeq.length);
-            q.start = start;
-            q.end = end;
-        }
-        var newSeqCallback = function( sequence ) {
-            var ret = rev ? Util.revcom( sequence ) : sequence
-            var len = ret.length - ret.trim().length;
-            // handle corner cases with padding the ref seqs with spaces at ends of chromosomes
-            // not fully passing tests yet
-            if(len && origstart>1) {
-                ret = ret.trim() + new Array(len).join(" ");
+        
+        var offset = 0;
+        var currseq;
+        var nextseq;
+        var cross = false;
+        for(var i = 0; i < projection.length; i++) {
+            currseq = projection[i].name;
+            if(offset+projection[i].length > query.end) {
+                break;
             }
-            seqCallback(ret);
+            offset += projection[i].length;
+        }
+        if(query.start < offset && offset < query.end) {
+            nextseq = currseq;
+            currseq = (projection[i-1]||{}).name||currseq;
+            cross = true;
         }
 
-        if(projection&&query.start>s0.length) {
-            this.inherited(arguments, [{ref:s1.name,start:query.start-s0.length,end:query.end-s0.length}, seqCallback, errorCallback] );
+        if(!cross) {
+            var q = {ref: currseq, start: query.start - offset, end: query.end - offset};
+            this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
         }
-        else if(projection&&query.end<s0.length) {
-            this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, seqCallback, errorCallback] );
-        }
-        else if(projection&&query.start<s0.length&&query.end>s0.length) {
+        else {
             var seq = '';
             while( seq.length < query.end-query.start )
                 seq += ' ';
 
             var def1 = new Deferred();
             var def2= new Deferred();
-            function replaceAt( str, offset, replacement ) {
-                var rOffset = 0;
-                if( offset < 0 ) {
-                    rOffset = -offset;
-                    offset = 0;
-                }
+            var q1 = { ref: currseq, start: query.start, end: offset-1 };
+            var q2 = { ref: nextseq, start: 0, end: query.end - offset };
+            var callback1 = function(s) { seq = thisB._replaceAt(seq, 0, s); def1.resolve(); }
+            var callback2 = function(s) { seq = thisB._replaceAt(seq, s0.length-query.start, s); def2.resolve(); }
 
-                var length = Math.min( str.length - offset, replacement.length - rOffset );
-
-                return str.substr( 0, offset ) + replacement.substr( rOffset, length ) + str.substr( offset + length );
-            }
-            this.inherited(arguments, [{ref:s0.name,start:query.start,end:s0.length},
-                function(seqret) {
-                    seq = replaceAt( seq, 0, seqret );
-                    def1.resolve();
-                },
-                errorCallback
-            ]);
-            this.inherited(arguments, [{ref:s1.name,start:0,end:query.end-s0.length},
-                function(seqret) {
-                    seq = replaceAt( seq, s0.length-query.start, seqret );
-                    def2.resolve();
-                },
-                errorCallback
-            ]);
-            all([def1.promise,def2.promise]).then(function() {
-                seqCallback(seq);
-            });
+            this.inherited(arguments, [q1,callback1,errorCallback]);
+            this.inherited(arguments, [q2,callback2,errorCallback]);
+            all([def1.promise,def2.promise]).then(function() {seqCallback(seq)});    
         }
+    },
+
+    _replaceAt: function( str, offset, replacement ) {
+        var rOffset = 0;
+        if( offset < 0 ) {
+            rOffset = -offset;
+            offset = 0;
+        }
+
+        var length = Math.min( str.length - offset, replacement.length - rOffset );
+
+        return str.substr( 0, offset ) + replacement.substr( rOffset, length ) + str.substr( offset + length );
     }
+        
 });
 });

@@ -18,14 +18,14 @@ define([
        ) {
 return declare( NCList,
 {
+    constructor: function( args ) {
+        console.log(args);
+    },
+
     getGlobalStats: function( successCallback, errorCallback ) {
-        var projection = this.browser.config.projectionStruct;
-        var s0,s1;
-        if( projection ) {
-            s0 = projection[0];
-            s1 = projection[1];
-        }
-        return ( this._deferred.root || this.getDataRoot( s0.name ) )
+        var projection = this.browser.config.projectionStruct||[];
+        var name = ( projection[0]||{} ).name || this.browser.refSeq.name;
+        return ( this._deferred.root || this.getDataRoot( name ) )
            .then( function( data ) { successCallback( data.stats ); },
                   errorCallback
                 );
@@ -34,16 +34,10 @@ return declare( NCList,
 
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
-        var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var startBase = query.start;
         var endBase = query.end;
         var len = this.refSeq.length;
         var projection = this.browser.config.projectionStruct;
-
-        if(rev) {
-            query.start = len - endBase
-            query.end = len - startBase
-        }
 
         var offset = 0;
         var currseq;
@@ -56,7 +50,6 @@ return declare( NCList,
             }
             offset += projection[i].length;
         }
-        //console.log('here',currseq, nextseq, offset+(projection[i]||{length:0}).length, query.start, offset, query.end);
         if(query.start < offset && offset < query.end) {
             nextseq = currseq;
             currseq = (projection[i-1]||{}).name||currseq;
@@ -64,21 +57,6 @@ return declare( NCList,
         }
 
 
-        var flip = function(s) {
-            return new SimpleFeature({
-                id: s.get('id'),
-                data: {
-                    start: len-s.get('end'),
-                    name: s.get('name'),
-                    id: s.get('id'),
-                    type: s.get('type'),
-                    description: s.get('description'),
-                    end: len-s.get('start'),
-                    strand: -s.get('strand'),
-                    subfeatures: array.map(s.get('subfeatures'), flip)
-                }
-            });
-        }
         var shift = function(s) {
             var offset = 0;
             var seq = s.get('seq_id');
@@ -102,7 +80,6 @@ return declare( NCList,
         var featCallback = function( feature ) {
             var ret = feature;
             if(projection) ret = shift(feature);
-            if(rev) ret = flip(feature);
             return origFeatCallback(ret);
         };
 
@@ -111,7 +88,6 @@ return declare( NCList,
             this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
         }
         else {
-            //console.log(currseq,nextseq);
             var def1 = new Deferred();
             var def2 = new Deferred();
             var query1 = { ref: currseq, start: query.start, end: offset-1 };

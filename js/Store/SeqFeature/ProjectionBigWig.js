@@ -16,16 +16,10 @@ return declare( BigWig,
 {
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
-        var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var startBase  = query.start;
         var endBase    = query.end;
         var len = this.refSeq.length;
         var projection = this.browser.config.projectionStruct;
-
-        if(rev) {
-            query.start = len - endBase
-            query.end = len - startBase
-        }
 
         var offset = 0;
         var currseq;
@@ -55,21 +49,10 @@ return declare( BigWig,
                 }
             });
         }
-        var flip = function(s) {
-            return new SimpleFeature({
-                id: s.get('id'),
-                data: {
-                    start: len-s.get('end'),
-                    end: len-s.get('start'),
-                    strand: -s.get('strand'),
-                    score: s.get('score'),
-                }
-            });
-        }
+        
         var featCallback = function(seq_id) {
             return function(feature) {
                 var ret = feature;
-                //if(rev) ret = flip(feature);
                 if(projection) ret = shift(feature, seq_id);
                 return origFeatCallback(ret);
             }
