@@ -18,6 +18,20 @@ define([
        ) {
 return declare( NCList,
 {
+    getGlobalStats: function( successCallback, errorCallback ) {
+        var projection = this.browser.config.projectionStruct;
+        var s0,s1;
+        if( projection ) {
+            s0 = projection[0];
+            s1 = projection[1];
+        }
+        return ( this._deferred.root || this.getDataRoot( s0.name ) )
+           .then( function( data ) { successCallback( data.stats ); },
+                  errorCallback
+                );
+    },
+
+
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
@@ -75,12 +89,10 @@ return declare( NCList,
         };
 
         if(projection&&query.start>s0.length) {
-             finishCallback();
-            //this.inherited(arguments, [{ref:s1.name,start:query.start-s0.length,end:query.end-s0.length}, featCallback, finishCallback, errorCallback] );
+            this.inherited(arguments, [{ref:s1.name,start:query.start-s0.length,end:query.end-s0.length}, featCallback, finishCallback, errorCallback] );
         }
         else if(projection&&query.end<s0.length) {
-             finishCallback();
-            //this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, featCallback, finishCallback, errorCallback] );
+            this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, featCallback, finishCallback, errorCallback] );
         }
         else if(projection&&query.start<s0.length&&query.end>s0.length) {
             var def1 = new Deferred();
@@ -89,15 +101,11 @@ return declare( NCList,
             var query2 = {ref:s1.name,start:0,end:query.end-s0.length};
             var supermethod = this.getInherited(arguments);
             var callback = function() {
-                console.log('here2',s0.name);
                 def1.resolve();
-                supermethod.apply(thisB, [query2, featCallback, function() { console.log('here1',s1.name);def2.resolve(); }, errorCallback] );
+                supermethod.apply(thisB, [query2, featCallback, function() { def2.resolve(); }, errorCallback] );
             }
             supermethod.apply(this, [query, featCallback, callback, errorCallback] );
             all([def1.promise,def2.promise]).then(finishCallback);
-        }
-        else {
-            console.log('wtf');
         }
     }
 
