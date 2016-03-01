@@ -20,12 +20,41 @@ return declare( BigWig,
         var startBase  = query.start;
         var endBase    = query.end;
         var len = this.refSeq.length;
+        var projection = this.browser.config.projectionStruct;
 
         if(rev) {
             query.start = len - endBase
             query.end = len - startBase
         }
 
+        var offset = 0;
+        var currseq;
+        var nextseq;
+        var cross = false;
+
+        for(var i = 0; i < projection.length; i++) {
+            currseq = projection[i].name;
+            if(offset+projection[i].length > query.end) {
+                break;
+            }
+            offset += projection[i].length;
+        }
+
+        var shift = function(s,r) {
+            var offset = 0;
+            for(var i=0; i<projection.length && r!=projection[i].name;i++) {
+                offset += projection[i].length;
+            }
+            return new SimpleFeature({
+                id: s.get('id'),
+                data: {
+                    start: s.get('start') + offset,
+                    end: s.get('end') + offset,
+                    score: s.get('score'),
+                    strand: s.get('strand')
+                }
+            });
+        }
         var flip = function(s) {
             return new SimpleFeature({
                 id: s.get('id'),
@@ -37,11 +66,32 @@ return declare( BigWig,
                 }
             });
         }
-        var featCallback = function( feature ) {
-            return origFeatCallback(rev ? flip(feature) : feature);
+        var featCallback = function(seq_id) {
+            return function(feature) {
+                var ret = feature;
+                //if(rev) ret = flip(feature);
+                if(projection) ret = shift(feature, seq_id);
+                return origFeatCallback(ret);
+            }
         };
 
-        this.inherited(arguments, [query, featCallback, finishCallback, errorCallback] );
+        if(!cross) {
+            var q = {ref: currseq, start: query.start - offset, end: query.end - offset};
+            this.inherited(arguments, [q, featCallback(currseq), finishCallback, errorCallback] );
+        }
+        else {
+            var def1 = new Deferred();
+            var def2 = new Deferred();
+            var query1 = { ref: currseq, start: query.start, end: offset-1 };
+            var query2 = { ref: nextseq, start: 0, end: query.end - offset };
+            var supermethod = this.getInherited(arguments);
+            var callback = function() {
+                def1.resolve();
+                supermethod.apply(thisB, [query2, featCallback(nextseq), function() { def2.resolve(); }, errorCallback] );
+            }
+            supermethod.apply(this, [query1, featCallback(currseq), callback, errorCallback] );
+            all([def1.promise,def2.promise]).then(finishCallback);
+        }
     }
 
 });
