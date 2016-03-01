@@ -35,21 +35,34 @@ return declare( NCList,
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
-        var startBase  = query.start;
-        var endBase    = query.end;
+        var startBase = query.start;
+        var endBase = query.end;
         var len = this.refSeq.length;
         var projection = this.browser.config.projectionStruct;
-        var s0,s1;
-
-        if( projection ) {
-            s0 = projection[0];
-            s1 = projection[1];
-        }
 
         if(rev) {
             query.start = len - endBase
             query.end = len - startBase
         }
+
+        var offset = 0;
+        var currseq;
+        var nextseq;
+        var cross = false;
+        for(var i = 0; i < projection.length; i++) {
+            currseq = projection[i].name;
+            if(offset+projection[i].length > query.end) {
+                break;
+            }
+            offset += projection[i].length;
+        }
+        //console.log('here',currseq, nextseq, offset+(projection[i]||{length:0}).length, query.start, offset, query.end);
+        if(query.start < offset && offset < query.end) {
+            nextseq = currseq;
+            currseq = (projection[i-1]||{}).name||currseq;
+            cross = true;
+        }
+
 
         var flip = function(s) {
             return new SimpleFeature({
@@ -67,11 +80,16 @@ return declare( NCList,
             });
         }
         var shift = function(s) {
+            var offset = 0;
+            var seq = s.get('seq_id');
+            for(var i=0; i<projection.length && seq!=projection[i].name;i++) {
+                offset += projection[i].length;
+            }
             return new SimpleFeature({
                 id: s.get('id'),
                 data: {
-                    start: s.get('seq_id')==s1.name?s.get('start')+s0.length:s.get('start'),
-                    end: s.get('seq_id')==s1.name?s.get('end')+s0.length:s.get('end'),
+                    start: s.get('start') + offset,
+                    end: s.get('end') + offset,
                     name: s.get('name'),
                     id: s.get('id'),
                     type: s.get('type'),
@@ -88,23 +106,22 @@ return declare( NCList,
             return origFeatCallback(ret);
         };
 
-        if(projection&&query.start>s0.length) {
-            this.inherited(arguments, [{ref:s1.name,start:query.start-s0.length,end:query.end-s0.length}, featCallback, finishCallback, errorCallback] );
+        if(!cross) {
+            var q = {ref: currseq, start: query.start - offset, end: query.end - offset};
+            this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
         }
-        else if(projection&&query.end<s0.length) {
-            this.inherited(arguments, [{ref:s0.name,start:query.start,end:query.end}, featCallback, finishCallback, errorCallback] );
-        }
-        else if(projection&&query.start<s0.length&&query.end>s0.length) {
+        else {
+            //console.log(currseq,nextseq);
             var def1 = new Deferred();
             var def2 = new Deferred();
-            var query = {ref:s0.name,start:query.start,end:s0.length-1};
-            var query2 = {ref:s1.name,start:0,end:query.end-s0.length};
+            var query1 = { ref: currseq, start: query.start, end: offset-1 };
+            var query2 = { ref: nextseq, start: 0, end: query.end - offset };
             var supermethod = this.getInherited(arguments);
             var callback = function() {
                 def1.resolve();
                 supermethod.apply(thisB, [query2, featCallback, function() { def2.resolve(); }, errorCallback] );
             }
-            supermethod.apply(this, [query, featCallback, callback, errorCallback] );
+            supermethod.apply(this, [query1, featCallback, callback, errorCallback] );
             all([def1.promise,def2.promise]).then(finishCallback);
         }
     }
