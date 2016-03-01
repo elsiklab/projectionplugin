@@ -101,8 +101,8 @@ return declare( NCList,
         }
         var featCallback = function( feature ) {
             var ret = feature;
-            //if(rev) ret = flip(feature);
             if(projection) ret = shift(feature);
+            if(rev) ret = flip(feature);
             return origFeatCallback(ret);
         };
 

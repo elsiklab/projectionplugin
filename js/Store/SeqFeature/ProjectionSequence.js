@@ -22,7 +22,7 @@ return declare( Sequence,
         var rev = this.config.reverseComplement||this.browser.config.reverseComplement;
         var origstart = query.start;
         var q = dojo.clone(query);
-        var projection = this.browser.config.projectionStruct;
+        var projection = this.browser.config.projectionStruct || [];
         var s0,s1;
         if( projection ) {
             s0 = projection[0];
