@@ -39,11 +39,9 @@ return declare( NCList,
             var offsetstart = projection.start-1000;
             var offsetend = projection.start-1000;
             if(s.get('start')<gaps[0].end&&s.get('end')>gaps[gaps.length - 1].end) {
-                console.log('here',s.get('type'));
                 offsetend = offsetstart+gapsum;
             }
             else {
-                console.log('here2',s.get('type'));
                 for(var i=0; i<gaps.length;i++) {
                     if(s.get('start')>gaps[i].start && s.get('end')<gaps[i].end) {
                         return null;

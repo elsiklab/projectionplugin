@@ -2,6 +2,8 @@ define([
            'dojo/_base/declare',
            'dojo/_base/lang',
            'dojo/_base/array',
+           'dojo/Deferred',
+           'dojo/promise/all',
            'JBrowse/Store/SeqFeature/BigWig',
            'JBrowse/Model/SimpleFeature'
        ],
@@ -9,6 +11,8 @@ define([
            declare,
            lang,
            array,
+           Deferred,
+           all,
            BigWig,
            SimpleFeature
        ) {

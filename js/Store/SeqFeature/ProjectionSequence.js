@@ -42,7 +42,7 @@ return declare( Sequence,
 
         if(!cross) {
             var q = {ref: currseq, start: query.start - offset, end: query.end - offset};
-            this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
+            this.inherited(arguments, [q, seqCallback, errorCallback] );
         }
         else {
             var seq = '';
@@ -54,7 +54,7 @@ return declare( Sequence,
             var q1 = { ref: currseq, start: query.start, end: offset-1 };
             var q2 = { ref: nextseq, start: 0, end: query.end - offset };
             var callback1 = function(s) { seq = thisB._replaceAt(seq, 0, s); def1.resolve(); }
-            var callback2 = function(s) { seq = thisB._replaceAt(seq, s0.length-query.start, s); def2.resolve(); }
+            var callback2 = function(s) { seq = thisB._replaceAt(seq,offset-query.start, s); def2.resolve(); }
 
             this.inherited(arguments, [q1,callback1,errorCallback]);
             this.inherited(arguments, [q2,callback2,errorCallback]);
