@@ -25,7 +25,7 @@ Currently performs a reverse complement projection
     * ProjectionPlugin/Store/SeqFeature/ProjectionBigWig
     * ProjectionPlugin/Store/SeqFeature/ProjectionBAM*
 
-* denotes in-progress
+*denotes in-progress
 
 
 ## Screenshots
