@@ -6,15 +6,15 @@ A JBrowse plugin for re-mapping coordinates "on the fly"
 
 * storeClass - The projections are implemented as store classes which depend on the data types. This plugin currently allows:
   * reverse projections
-    * ProjectionPlugin/Store/ReverseSequence
-    * ProjectionPlugin/Store/ReverseNCList
-    * ProjectionPlugin/Store/ReverseBigWig
-    * ProjectionPlugin/Store/ReverseBAM
+    * ProjectionPlugin/Store/SeqFeature/ReverseSequence
+    * ProjectionPlugin/Store/SeqFeature/ReverseNCList
+    * ProjectionPlugin/Store/SeqFeature/ReverseBigWig
+    * ProjectionPlugin/Store/SeqFeature/ReverseBAM
   * "folded" regions
-    * ProjectionPlugin/Store/FoldSequence*
-    * ProjectionPlugin/Store/FoldNCList
-    * ProjectionPlugin/Store/FoldBigWig*
-    * ProjectionPlugin/Store/FoldBAM*
+    * ProjectionPlugin/Store/SeqFeature/FoldSequence*
+    * ProjectionPlugin/Store/SeqFeature/FoldNCList
+    * ProjectionPlugin/Store/SeqFeature/FoldBigWig*
+    * ProjectionPlugin/Store/SeqFeature/FoldBAM*
   * multiple scaffolds
     * ProjectionPlugin/Store/SeqFeature/ProjectionSequence
     * ProjectionPlugin/Store/SeqFeature/ProjectionNCList
