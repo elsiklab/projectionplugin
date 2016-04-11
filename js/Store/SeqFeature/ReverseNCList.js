@@ -26,20 +26,22 @@ return declare( NCList,
             query.end = len - startBase
         }
 
-        var flip = function(s) {
-            return new SimpleFeature({
+        var flip = function(s,p) {
+            var f = new SimpleFeature({
                 id: s.get('id'),
+                parent: p,
                 data: {
                     start: len-s.get('end'),
+                    end: len-s.get('start'),
+                    strand: -s.get('strand'),
                     name: s.get('name'),
                     id: s.get('id'),
                     type: s.get('type'),
                     description: s.get('description'),
-                    end: len-s.get('start'),
-                    strand: -s.get('strand'),
-                    subfeatures: array.map(s.get('subfeatures'), flip)
                 }
             });
+            f.data.subfeatures = array.map(s.get('subfeatures'), function(elt) { return flip(elt,f); })
+            return f;
         }
         var featCallback = function( feature ) {
             return origFeatCallback(rev ? flip(feature) : feature);
