@@ -25,6 +25,24 @@ return declare( BAM,
         var len = this.refSeq.length;
         var projection = this.browser.config.projectionStruct;
 
+        var offset = 0;
+        var currseq;
+        var nextseq;
+        var cross = false;
+        for(var i = 0; i < projection.length; i++) {
+            currseq = projection[i].name;
+            if(offset+projection[i].length > query.end) {
+                break;
+            }
+            offset += projection[i].length;
+        }
+        if(query.start < offset && offset < query.end) {
+            nextseq = currseq;
+            currseq = (projection[i-1]||{}).name||currseq;
+            cross = true;
+        }
+
+
         var position_offset = 0;
         var projection_offset = 0;
         var currseq;
@@ -63,10 +81,23 @@ return declare( BAM,
         var shift = function(s) {
             var offset = 0;
             var seq = s.get('seq_id');
-            for(var i=0; i<projection.length;i++) {
-                if(overlap(s.get('start'),s.get('end'),projection[i].start,projection[i].end)) {
-                    offset+=projection.offset;
+            projection.forEach(function(p) {
+                if(overlap(s.get('start'), s.get('end'), p.start, p.end)) {
+                    offset+=p.offset;
                 }
+            });
+            var next_segment_position = s.get('next_segment_position');
+            if(s.get('multi_segment_template')) {
+                var ret = s.get('next_segment_position').split(":");
+                var next_ref = ret[0];
+                var next_start = ret[1];
+                var next_offset = 0;
+                projection.forEach(function(p) {
+                    if(overlap(next_start, next_start+100, p.start, p.end)) {
+                        next_offset+=p.offset;
+                    }
+                });
+                next_start+=next_offset;
             }
             return new SimpleFeature({
                 id: s.get('id'),
