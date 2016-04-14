@@ -55,13 +55,18 @@ return declare( BAM,
             cross = true;
         }
         console.log(nextseq, currseq, position_offset, projection_offset);
+        function overlap(min1, max1, min2, max2) {
+            return Math.max(0, Math.min(max1, max2) - Math.max(min1, min2))
+        }
 
 
         var shift = function(s) {
             var offset = 0;
             var seq = s.get('seq_id');
-            for(var i=0; i<projection.length && seq!=projection[i].name;i++) {
-                offset += projection[i].end - projection[i].start;
+            for(var i=0; i<projection.length;i++) {
+                if(overlap(s.get('start'),s.get('end'),projection[i].start,projection[i].end)) {
+                    offset+=projection.offset;
+                }
             }
             return new SimpleFeature({
                 id: s.get('id'),
@@ -86,9 +91,9 @@ return declare( BAM,
         };
 
         if(!cross) {
-            console.log('start',query.start - position_offset + projection_offset);
-            console.log('end', query.end - position_offset + projection_offset);
-            var q = {ref: currseq, start: query.start - position_offset + projection_offset, end: query.end - position_offset + projection_offset};
+            console.log('start',position_offset, projection_offset, query.start + position_offset + projection_offset);
+            console.log('end', position_offset, projection_offset, query.end + position_offset + projection_offset);
+            var q = {ref: currseq, start: query.start + position_offset + projection_offset, end: query.end + position_offset + projection_offset};
             this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
         }
         else {
