@@ -77,12 +77,10 @@ return declare( BAM,
             return origFeatCallback(ret);
         };
 
-        var ret = this.translate(query)
+        var ret = this.translate(query);
+        console.log(ret);
 
-        if(ret.length == 1) {
-            this.inherited(arguments, [ret[0], featCallback, finishCallback, errorCallback] );
-        }
-        else if(ret.length == 2) {
+        if(lang.isArray(ret)) {
             var def1 = new Deferred();
             var def2 = new Deferred();
             var supermethod = this.getInherited(arguments);
@@ -93,6 +91,9 @@ return declare( BAM,
             supermethod.apply(this, [ret[0], featCallback, callback, errorCallback] );
             all([def1.promise,def2.promise]).then(finishCallback);
         }
+        else {
+            this.inherited(arguments, [ret, featCallback, finishCallback, errorCallback] );
+        }
     },
 
     translate: function(query) {
@@ -101,25 +102,30 @@ return declare( BAM,
         var currseq;
         var nextseq;
         var cross = false;
-
-        var newstart;
-
+        var newstart = 0;
 
 
-        array.some(this.projection.some, function(p) {
-            offset += p.end - p.start;
+
+        array.some(this.projection, function(p,i) {
+            offset += p.offset+(p.end-p.start);
+            currseq = p.name;
+            nextseq = (this.projection[i+1]||{}).name||"";
+            newstart = p.offset;
             if(query.end >= offset && query.start <= offset) {
-                newstart = p.start;
+                newstart = (this.projection[i+1]||{}).offset;
                 return true;
             }
-        });
+        }, this);
         if(query.start < offset && offset < query.end) {
             cross = true;
         }
+        var len = query.end - query.start;
+        var sub = offset - query.start;
 
-        
-        return cross ? [{ ref: currseq, start: query.start, end: offset-1 }, { ref: nextseq, start: newstart, end: query.end - offset }] :
-                       [{ ref: currseq, start: query.start - offset, end: query.end - offset }];
+        console.log(offset,newstart)
+
+        return cross ? [{ ref: currseq, start: query.start, end: offset-1 }, { ref: nextseq, start: newstart, end: newstart+len-sub }] :
+                       { ref: currseq, start: query.start, end: query.end };
     }
 
 
