@@ -16,72 +16,28 @@ define([
            BAM,
            SimpleFeature
        ) {
+
+function overlap(min1, max1, min2, max2) {
+    return Math.max(0, Math.min(max1, max2) - Math.max(min1, min2))
+}
+
+
 return declare( BAM,
 {
+    constructor: function( args ) {
+        this.projection = args.projectionStruct || this.browser.config.projectionStruct;
+    },
+
     getFeatures: function( query, origFeatCallback, finishCallback, errorCallback ) {
         var thisB = this;
         var startBase = query.start;
         var endBase = query.end;
         var len = this.refSeq.length;
-        var projection = this.browser.config.projectionStruct;
-
-        var offset = 0;
-        var currseq;
-        var nextseq;
-        var cross = false;
-        for(var i = 0; i < projection.length; i++) {
-            currseq = projection[i].name;
-            if(offset+projection[i].length > query.end) {
-                break;
-            }
-            offset += projection[i].length;
-        }
-        if(query.start < offset && offset < query.end) {
-            nextseq = currseq;
-            currseq = (projection[i-1]||{}).name||currseq;
-            cross = true;
-        }
-
-
-        var position_offset = 0;
-        var projection_offset = 0;
-        var currseq;
-        var nextseq;
-        var cross = false;
-        var next_adder = 0;
-        for(var i = 0; i < projection.length-1; i++) {
-            var len = projection[i].end - projection[i].start;
-            currseq = projection[i].name;
-            var nextseq = projection[i+1].name;
-            if (position_offset + len > query.end) {
-                break;
-            }
-            else if(currseq != nextseq) {
-                console.log('currseq',currseq,nextseq)
-                position_offset += 10000+len;
-                projection_offset += 0;
-            }
-            else {
-                console.log('currseq adding gap',currseq,nextseq)
-                position_offset += 10000;
-                projection_offset += 0;
-            }
-        }
-        if(query.start < position_offset && position_offset < query.end) {
-            nextseq = currseq;
-            currseq = (projection[i-1]||{}).name || currseq;
-            cross = true;
-        }
-        console.log(nextseq, currseq, position_offset, projection_offset);
-        function overlap(min1, max1, min2, max2) {
-            return Math.max(0, Math.min(max1, max2) - Math.max(min1, min2))
-        }
-
 
         var shift = function(s) {
             var offset = 0;
             var seq = s.get('seq_id');
-            projection.forEach(function(p) {
+            thisB.projection.forEach(function(p) {
                 if(overlap(s.get('start'), s.get('end'), p.start, p.end)) {
                     offset+=p.offset;
                 }
@@ -92,7 +48,7 @@ return declare( BAM,
                 var next_ref = ret[0];
                 var next_start = ret[1];
                 var next_offset = 0;
-                projection.forEach(function(p) {
+                thisB.projection.forEach(function(p) {
                     if(overlap(next_start, next_start+100, p.start, p.end)) {
                         next_offset+=p.offset;
                     }
@@ -117,29 +73,53 @@ return declare( BAM,
         }
         var featCallback = function( feature ) {
             var ret = feature;
-            if(projection) ret = shift(feature);
+            if(thisB.projection) ret = shift(feature);
             return origFeatCallback(ret);
         };
 
-        if(!cross) {
-            console.log('start',position_offset, projection_offset, query.start + position_offset + projection_offset);
-            console.log('end', position_offset, projection_offset, query.end + position_offset + projection_offset);
-            var q = {ref: currseq, start: query.start + position_offset + projection_offset, end: query.end + position_offset + projection_offset};
-            this.inherited(arguments, [q, featCallback, finishCallback, errorCallback] );
+        var ret = this.translate(query)
+
+        if(ret.length == 1) {
+            this.inherited(arguments, [ret[0], featCallback, finishCallback, errorCallback] );
         }
-        else {
+        else if(ret.length == 2) {
             var def1 = new Deferred();
             var def2 = new Deferred();
-            var query1 = { ref: currseq, start: query.start, end: position_offset-1+projection_offset };
-            var query2 = { ref: nextseq, start: 0, end: query.end - position_offset+projection_offset };
             var supermethod = this.getInherited(arguments);
             var callback = function() {
                 def1.resolve();
-                supermethod.apply(thisB, [query2, featCallback, function() { def2.resolve(); }, errorCallback] );
+                supermethod.apply(thisB, [ret[1], featCallback, function() { def2.resolve(); }, errorCallback] );
             }
-            supermethod.apply(this, [query1, featCallback, callback, errorCallback] );
+            supermethod.apply(this, [ret[0], featCallback, callback, errorCallback] );
             all([def1.promise,def2.promise]).then(finishCallback);
         }
+    },
+
+    translate: function(query) {
+
+        var offset = 0;
+        var currseq;
+        var nextseq;
+        var cross = false;
+
+        var newstart;
+
+
+
+        array.some(this.projection.some, function(p) {
+            offset += p.end - p.start;
+            if(query.end >= offset && query.start <= offset) {
+                newstart = p.start;
+                return true;
+            }
+        });
+        if(query.start < offset && offset < query.end) {
+            cross = true;
+        }
+
+        
+        return cross ? [{ ref: currseq, start: query.start, end: offset-1 }, { ref: nextseq, start: newstart, end: query.end - offset }] :
+                       [{ ref: currseq, start: query.start - offset, end: query.end - offset }];
     }
 
 
