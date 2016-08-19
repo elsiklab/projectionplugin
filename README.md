@@ -1,6 +1,6 @@
 # projectionplugin
 
-A JBrowse plugin for re-mapping coordinates "on the fly"
+A JBrowse plugin for re-mapping coordinates "on the fly". Should be considered experimental. Only reverse complement works moderately well
 
 ## Options
 
