@@ -23,7 +23,7 @@ function(
                     onClick: function() {
                         var ret = browser.view.visibleRegion();
                         browser.config.reverseComplement = this.get('checked');
-                        browser.navigateTo({ ref: ret.ref, start: Math.round(browser.refSeq.length - ret.end), end: Math.round(browser.refSeq.length - ret.start)});
+                        browser.navigateTo( ret.ref + ":" + Math.round(browser.refSeq.length - ret.end) + ".." + Math.round(browser.refSeq.length - ret.start));
                         browser.view.redrawTracks();
                     }
                 }));
